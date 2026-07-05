@@ -1,12 +1,13 @@
 import sys
 
-from PySide6.QtWidgets import QApplication,QLabel
+from PySide6.QtWidgets import QApplication
+
+from app.ui.main_window import MainWindow
+
 
 app = QApplication(sys.argv)
 
-janela = QLabel("Bem-vindo ao LogOS")
-janela.resize(400, 200)
-janela.setWindowTitle("LogOS")
+janela = MainWindow()
 janela.show()
 
 sys.exit(app.exec())
