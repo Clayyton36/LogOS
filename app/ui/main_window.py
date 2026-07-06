@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.ui.nova_devolucao_page import NovaDevolucaoPage
 
 class MainWindow(QMainWindow):
 
