@@ -95,6 +95,25 @@ class DevolucaoRepository:
 
         return [Devolucao(**dict(linha)) for linha in linhas]
 
+    def obter_indicadores(self):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'Recebida' THEN 1 ELSE 0 END) AS recebidas,
+                SUM(CASE WHEN status = 'Analisada' THEN 1 ELSE 0 END) AS aguardando_decisao,
+                SUM(CASE WHEN status = 'Finalizada' AND destino = 'ESTOQUE' THEN 1 ELSE 0 END) AS estoque,
+                SUM(CASE WHEN status = 'Finalizada' AND destino = 'TROCA' THEN 1 ELSE 0 END) AS troca,
+                SUM(CASE WHEN status = 'Finalizada' AND destino = 'DESCARTE' THEN 1 ELSE 0 END) AS descarte
+            FROM devolucoes
+        """)
+        linha = cursor.fetchone()
+        conn.close()
+
+        return {chave: (linha[chave] or 0) for chave in linha.keys()}
+
     def atualizar_analise(
         self,
         devolucao_id: int,

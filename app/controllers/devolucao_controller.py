@@ -58,6 +58,9 @@ class DevolucaoController:
     def listar_plataformas(self):
         return self.repository.listar_plataformas()
 
+    def obter_indicadores(self):
+        return self.repository.obter_indicadores()
+
     def listar_pendentes_analise(self):
         return self.repository.listar_por_status("Recebida")
 
