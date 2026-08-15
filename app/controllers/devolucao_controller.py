@@ -54,3 +54,32 @@ class DevolucaoController:
 
     def listar_plataformas(self):
         return self.repository.listar_plataformas()
+
+    def listar_pendentes_analise(self):
+        return self.repository.listar_por_status("Recebida")
+
+    def registrar_analise(
+        self,
+        devolucao_id: int,
+        condicao_produto: str,
+        avaria: str = "",
+        acessorios: str = "",
+        situacao_encontrada: str = "",
+        observacoes_analise: str = "",
+    ):
+        if devolucao_id is None:
+            raise DevolucaoValidationError("Selecione uma devolução para analisar.")
+
+        if not condicao_produto.strip():
+            raise DevolucaoValidationError("Preencha o campo obrigatório: Condição do produto.")
+
+        self.repository.atualizar_analise(
+            devolucao_id=devolucao_id,
+            condicao_produto=condicao_produto.strip(),
+            avaria=avaria.strip(),
+            acessorios=acessorios.strip(),
+            situacao_encontrada=situacao_encontrada.strip(),
+            observacoes_analise=observacoes_analise.strip(),
+            data_analise=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            novo_status="Analisada",
+        )

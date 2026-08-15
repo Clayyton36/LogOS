@@ -19,16 +19,32 @@ def create_tables():
             destino TEXT,
             data_recebimento TEXT,
             observacoes TEXT,
+            condicao_produto TEXT,
+            avaria TEXT,
+            acessorios TEXT,
+            situacao_encontrada TEXT,
+            observacoes_analise TEXT,
+            data_analise TEXT,
             data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    # Bancos criados antes do campo responsavel_recebimento existir não
-    # ganham a coluna via CREATE TABLE IF NOT EXISTS, então garantimos aqui.
-    colunas = {row["name"] for row in cursor.execute("PRAGMA table_info(devolucoes)")}
-    if "responsavel_recebimento" not in colunas:
-        cursor.execute("ALTER TABLE devolucoes ADD COLUMN responsavel_recebimento TEXT")
+    # Bancos criados antes de algum desses campos existir não ganham a
+    # coluna via CREATE TABLE IF NOT EXISTS, então garantimos aqui.
+    colunas_novas = [
+        "responsavel_recebimento",
+        "condicao_produto",
+        "avaria",
+        "acessorios",
+        "situacao_encontrada",
+        "observacoes_analise",
+        "data_analise",
+    ]
+    colunas_existentes = {row["name"] for row in cursor.execute("PRAGMA table_info(devolucoes)")}
+    for coluna in colunas_novas:
+        if coluna not in colunas_existentes:
+            cursor.execute(f"ALTER TABLE devolucoes ADD COLUMN {coluna} TEXT")
 
     conn.commit()
     conn.close()

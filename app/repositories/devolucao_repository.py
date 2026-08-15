@@ -81,3 +81,55 @@ class DevolucaoRepository:
         conn.close()
 
         return [linha["plataforma"] for linha in linhas]
+
+    def listar_por_status(self, status: str):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT * FROM devolucoes WHERE status = ? ORDER BY data_recebimento ASC",
+            (status,)
+        )
+        linhas = cursor.fetchall()
+        conn.close()
+
+        return [Devolucao(**dict(linha)) for linha in linhas]
+
+    def atualizar_analise(
+        self,
+        devolucao_id: int,
+        condicao_produto: str,
+        avaria: str,
+        acessorios: str,
+        situacao_encontrada: str,
+        observacoes_analise: str,
+        data_analise: str,
+        novo_status: str,
+    ):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE devolucoes
+            SET condicao_produto = ?,
+                avaria = ?,
+                acessorios = ?,
+                situacao_encontrada = ?,
+                observacoes_analise = ?,
+                data_analise = ?,
+                status = ?,
+                data_atualizacao = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            condicao_produto,
+            avaria,
+            acessorios,
+            situacao_encontrada,
+            observacoes_analise,
+            data_analise,
+            novo_status,
+            devolucao_id,
+        ))
+
+        conn.commit()
+        conn.close()
