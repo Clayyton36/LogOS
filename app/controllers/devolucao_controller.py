@@ -8,6 +8,9 @@ class DevolucaoValidationError(Exception):
     pass
 
 
+DESTINOS_VALIDOS = ("ESTOQUE", "TROCA", "DESCARTE")
+
+
 class DevolucaoController:
 
     def __init__(self, repository: DevolucaoRepository = None):
@@ -82,4 +85,29 @@ class DevolucaoController:
             observacoes_analise=observacoes_analise.strip(),
             data_analise=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             novo_status="Analisada",
+        )
+
+    def listar_pendentes_decisao(self):
+        return self.repository.listar_por_status("Analisada")
+
+    def registrar_decisao(
+        self,
+        devolucao_id: int,
+        destino: str,
+        observacoes_decisao: str = "",
+    ):
+        if devolucao_id is None:
+            raise DevolucaoValidationError("Selecione uma devolução para decidir o destino.")
+
+        if destino not in DESTINOS_VALIDOS:
+            raise DevolucaoValidationError(
+                "Selecione um destino válido: " + ", ".join(DESTINOS_VALIDOS)
+            )
+
+        self.repository.atualizar_decisao(
+            devolucao_id=devolucao_id,
+            destino=destino,
+            observacoes_decisao=observacoes_decisao.strip(),
+            data_decisao=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            novo_status="Finalizada",
         )

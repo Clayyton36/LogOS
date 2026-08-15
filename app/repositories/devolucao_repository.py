@@ -133,3 +133,33 @@ class DevolucaoRepository:
 
         conn.commit()
         conn.close()
+
+    def atualizar_decisao(
+        self,
+        devolucao_id: int,
+        destino: str,
+        observacoes_decisao: str,
+        data_decisao: str,
+        novo_status: str,
+    ):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE devolucoes
+            SET destino = ?,
+                observacoes_decisao = ?,
+                data_decisao = ?,
+                status = ?,
+                data_atualizacao = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            destino,
+            observacoes_decisao,
+            data_decisao,
+            novo_status,
+            devolucao_id,
+        ))
+
+        conn.commit()
+        conn.close()

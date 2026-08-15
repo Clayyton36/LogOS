@@ -15,6 +15,7 @@ from app.ui.nova_devolucao_page import NovaDevolucaoPage
 from app.ui.dashboard_page import DashboardPage
 from app.ui.consulta_page import ConsultaPage
 from app.ui.analise_page import AnalisePage
+from app.ui.decisao_page import DecisaoPage
 from app.ui.recebimento_page import RecebimentoPage
 from app.ui.relatorios_page import RelatoriosPage
 from app.ui.configuracoes_page import ConfiguracoesPage
@@ -71,6 +72,7 @@ class MainWindow(QMainWindow):
             "Nova Devolução": NovaDevolucaoPage(),
             "Consulta": ConsultaPage(),
             "Análise": AnalisePage(),
+            "Decisão": DecisaoPage(),
             "Recebimento": RecebimentoPage(),
             "Relatórios": RelatoriosPage(),
             "Configurações": ConfiguracoesPage(),

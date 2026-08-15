@@ -22,5 +22,7 @@ class Devolucao:
     situacao_encontrada: str = ""
     observacoes_analise: str = ""
     data_analise: str = ""
+    observacoes_decisao: str = ""
+    data_decisao: str = ""
     data_criacao: str = ""
     data_atualizacao: str = ""

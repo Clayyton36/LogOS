@@ -25,6 +25,8 @@ def create_tables():
             situacao_encontrada TEXT,
             observacoes_analise TEXT,
             data_analise TEXT,
+            observacoes_decisao TEXT,
+            data_decisao TEXT,
             data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -40,6 +42,8 @@ def create_tables():
         "situacao_encontrada",
         "observacoes_analise",
         "data_analise",
+        "observacoes_decisao",
+        "data_decisao",
     ]
     colunas_existentes = {row["name"] for row in cursor.execute("PRAGMA table_info(devolucoes)")}
     for coluna in colunas_novas:
