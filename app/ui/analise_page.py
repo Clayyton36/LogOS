@@ -11,21 +11,16 @@ from PySide6.QtWidgets import (
 )
 
 from app.controllers.devolucao_controller import DevolucaoController, DevolucaoValidationError
-
-CONDICOES_PRODUTO = [
-    "Perfeito estado",
-    "Bom estado - uso normal",
-    "Avariado",
-    "Incompleto",
-]
+from app.controllers.configuracoes_controller import ConfiguracoesController
 
 
 class AnalisePage(QWidget):
 
-    def __init__(self, controller: DevolucaoController = None):
+    def __init__(self, controller: DevolucaoController = None, controller_configuracoes: ConfiguracoesController = None):
         super().__init__()
 
         self.controller = controller or DevolucaoController()
+        self.controller_configuracoes = controller_configuracoes or ConfiguracoesController()
         self._pendentes = []
 
         layout = QVBoxLayout()
@@ -50,7 +45,6 @@ class AnalisePage(QWidget):
         form.addRow("Resumo do recebimento", self.label_resumo)
 
         self.combo_condicao = QComboBox()
-        self.combo_condicao.addItems(CONDICOES_PRODUTO)
         form.addRow("Condição do produto *", self.combo_condicao)
 
         self.campo_avaria = QLineEdit()
@@ -78,6 +72,8 @@ class AnalisePage(QWidget):
     def ao_exibir(self):
         """Chamado pela MainWindow toda vez que a página é aberta, para
         trazer devoluções recebidas desde a última visita."""
+        self._recarregar_condicoes_produto()
+
         devolucao_selecionada_id = self.combo_devolucao.currentData()
 
         self._pendentes = self.controller.listar_pendentes_analise()
@@ -98,6 +94,17 @@ class AnalisePage(QWidget):
         self.botao_registrar.setEnabled(tem_pendentes)
 
         self._atualizar_dados_devolucao_selecionada()
+
+    def _recarregar_condicoes_produto(self):
+        condicao_selecionada = self.combo_condicao.currentText()
+
+        self.combo_condicao.clear()
+        self.combo_condicao.addItems(
+            [condicao["nome"] for condicao in self.controller_configuracoes.listar_condicoes_produto()]
+        )
+
+        indice = self.combo_condicao.findText(condicao_selecionada)
+        self.combo_condicao.setCurrentIndex(indice if indice >= 0 else 0)
 
     def _devolucao_selecionada(self):
         devolucao_id = self.combo_devolucao.currentData()

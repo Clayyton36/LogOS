@@ -50,5 +50,27 @@ def create_tables():
         if coluna not in colunas_existentes:
             cursor.execute(f"ALTER TABLE devolucoes ADD COLUMN {coluna} TEXT")
 
+    tabela_condicoes_ja_existia = cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='condicoes_produto'"
+    ).fetchone() is not None
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS condicoes_produto (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    if not tabela_condicoes_ja_existia:
+        cursor.executemany(
+            "INSERT INTO condicoes_produto (nome) VALUES (?)",
+            [
+                ("Perfeito estado",),
+                ("Bom estado - uso normal",),
+                ("Avariado",),
+                ("Incompleto",),
+            ]
+        )
+
     conn.commit()
     conn.close()
