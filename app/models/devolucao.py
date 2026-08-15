@@ -11,6 +11,7 @@ class Devolucao:
     plataforma: str = ""
     sku: str = ""
     produto: str = ""
+    responsavel_recebimento: str = ""
     status: str = ""
     destino: str = ""
     data_recebimento: str = ""

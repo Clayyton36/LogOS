@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         configuracoes = ConfiguracoesPage()
 
         conteudo.addWidget(dashboard)
+        conteudo.addWidget(nova_devolucao)
         conteudo.addWidget(consulta)
         conteudo.addWidget(recebimento)
         conteudo.addWidget(relatorios)
@@ -59,6 +60,7 @@ class MainWindow(QMainWindow):
 
         # Botão
         botao = QPushButton("Nova Devolução")
+        botao.clicked.connect(lambda: conteudo.setCurrentWidget(nova_devolucao))
         menu.addWidget(botao)
 
         layout_principal.addLayout(menu)

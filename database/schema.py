@@ -14,6 +14,7 @@ def create_tables():
             plataforma TEXT NOT NULL,
             sku TEXT,
             produto TEXT,
+            responsavel_recebimento TEXT,
             status TEXT,
             destino TEXT,
             data_recebimento TEXT,
@@ -22,6 +23,12 @@ def create_tables():
             data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Bancos criados antes do campo responsavel_recebimento existir não
+    # ganham a coluna via CREATE TABLE IF NOT EXISTS, então garantimos aqui.
+    colunas = {row["name"] for row in cursor.execute("PRAGMA table_info(devolucoes)")}
+    if "responsavel_recebimento" not in colunas:
+        cursor.execute("ALTER TABLE devolucoes ADD COLUMN responsavel_recebimento TEXT")
 
     conn.commit()
     conn.close()
