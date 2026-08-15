@@ -11,8 +11,10 @@ class RecebimentoPage(QWidget):
         super().__init__()
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(24, 24, 24, 24)
 
         titulo = QLabel("Recebimento")
+        titulo.setObjectName("tituloPagina")
 
         layout.addWidget(titulo)
 

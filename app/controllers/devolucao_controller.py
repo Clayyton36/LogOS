@@ -48,3 +48,9 @@ class DevolucaoController:
         )
 
         return self.repository.salvar(devolucao)
+
+    def consultar(self, termo_busca: str = "", plataforma: str = ""):
+        return self.repository.listar(termo_busca=termo_busca.strip(), plataforma=plataforma.strip())
+
+    def listar_plataformas(self):
+        return self.repository.listar_plataformas()

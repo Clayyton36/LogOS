@@ -11,7 +11,11 @@ class ConfiguracoesPage(QWidget):
         super().__init__()
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(24, 24, 24, 24)
 
         titulo = QLabel("Configurações")
+        titulo.setObjectName("tituloPagina")
+
+        layout.addWidget(titulo)
 
         self.setLayout(layout)

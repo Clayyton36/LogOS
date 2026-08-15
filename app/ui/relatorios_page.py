@@ -11,8 +11,10 @@ class RelatoriosPage(QWidget):
         super().__init__()
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(24, 24, 24, 24)
 
-        titulo = QLabel("Relatorios")
+        titulo = QLabel("Relatórios")
+        titulo.setObjectName("tituloPagina")
 
         layout.addWidget(titulo)
 

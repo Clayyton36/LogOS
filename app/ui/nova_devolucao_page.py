@@ -19,8 +19,10 @@ class NovaDevolucaoPage(QWidget):
         self.controller = controller or DevolucaoController()
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(24, 24, 24, 24)
 
         titulo = QLabel("Nova Devolução")
+        titulo.setObjectName("tituloPagina")
         layout.addWidget(titulo)
 
         form = QFormLayout()
