@@ -88,6 +88,11 @@ class DecisaoPage(QWidget):
         return next((d for d in self._pendentes if d.id == devolucao_id), None)
 
     def _atualizar_dados_devolucao_selecionada(self):
+        # Troca de devolução selecionada: limpa o formulário para não
+        # arrastar dados digitados para a devolução anterior e enviá-los
+        # por engano para a devolução errada.
+        self._limpar_formulario()
+
         devolucao = self._devolucao_selecionada()
         if devolucao is None:
             self.label_resumo.setText("")
@@ -113,7 +118,6 @@ class DecisaoPage(QWidget):
             return
 
         QMessageBox.information(self, "Sucesso", "Decisão registrada com sucesso.")
-        self._limpar_formulario()
         self.ao_exibir()
 
     def _limpar_formulario(self):

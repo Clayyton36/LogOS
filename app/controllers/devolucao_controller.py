@@ -24,6 +24,7 @@ class DevolucaoController:
         sku: str,
         produto: str,
         responsavel_recebimento: str,
+        numero_nf: str = "",
         observacoes: str = "",
     ) -> int:
         campos_obrigatorios = {
@@ -45,6 +46,7 @@ class DevolucaoController:
             sku=sku.strip(),
             produto=produto.strip(),
             responsavel_recebimento=responsavel_recebimento.strip(),
+            numero_nf=numero_nf.strip(),
             observacoes=observacoes.strip(),
             status="Recebida",
             data_recebimento=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

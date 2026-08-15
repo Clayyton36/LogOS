@@ -28,6 +28,7 @@ class NovaDevolucaoPage(QWidget):
         form = QFormLayout()
 
         self.campo_numero_pedido = QLineEdit()
+        self.campo_numero_nf = QLineEdit()
         self.campo_plataforma = QLineEdit()
         self.campo_cliente = QLineEdit()
         self.campo_sku = QLineEdit()
@@ -36,6 +37,7 @@ class NovaDevolucaoPage(QWidget):
         self.campo_observacoes = QTextEdit()
 
         form.addRow("Número do pedido *", self.campo_numero_pedido)
+        form.addRow("Número da NF", self.campo_numero_nf)
         form.addRow("Plataforma *", self.campo_plataforma)
         form.addRow("Cliente *", self.campo_cliente)
         form.addRow("SKU", self.campo_sku)
@@ -60,6 +62,7 @@ class NovaDevolucaoPage(QWidget):
                 sku=self.campo_sku.text(),
                 produto=self.campo_produto.text(),
                 responsavel_recebimento=self.campo_responsavel.text(),
+                numero_nf=self.campo_numero_nf.text(),
                 observacoes=self.campo_observacoes.toPlainText(),
             )
         except DevolucaoValidationError as erro:
@@ -71,6 +74,7 @@ class NovaDevolucaoPage(QWidget):
 
     def _limpar_formulario(self):
         self.campo_numero_pedido.clear()
+        self.campo_numero_nf.clear()
         self.campo_plataforma.clear()
         self.campo_cliente.clear()
         self.campo_sku.clear()
