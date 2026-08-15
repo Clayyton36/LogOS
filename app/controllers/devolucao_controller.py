@@ -1,5 +1,8 @@
 from datetime import datetime
 
+import openpyxl
+from openpyxl.utils import get_column_letter
+
 from app.models.devolucao import Devolucao
 from app.repositories.devolucao_repository import DevolucaoRepository
 
@@ -9,6 +12,28 @@ class DevolucaoValidationError(Exception):
 
 
 DESTINOS_VALIDOS = ("ESTOQUE", "TROCA", "DESCARTE")
+
+COLUNAS_EXPORTACAO = [
+    ("numero_pedido", "Número do pedido"),
+    ("numero_nf", "Número da NF"),
+    ("cliente", "Cliente"),
+    ("plataforma", "Plataforma"),
+    ("sku", "SKU"),
+    ("produto", "Produto"),
+    ("responsavel_recebimento", "Responsável pelo recebimento"),
+    ("data_recebimento", "Data do recebimento"),
+    ("condicao_produto", "Condição do produto"),
+    ("avaria", "Avaria"),
+    ("acessorios", "Acessórios"),
+    ("situacao_encontrada", "Situação encontrada"),
+    ("observacoes_analise", "Observações da análise"),
+    ("data_analise", "Data da análise"),
+    ("destino", "Destino"),
+    ("observacoes_decisao", "Observações da decisão"),
+    ("data_decisao", "Data da decisão"),
+    ("status", "Status"),
+    ("observacoes", "Observações do recebimento"),
+]
 
 
 class DevolucaoController:
@@ -62,6 +87,23 @@ class DevolucaoController:
 
     def obter_indicadores(self):
         return self.repository.obter_indicadores()
+
+    def exportar_para_excel(self, caminho: str, termo_busca: str = "", plataforma: str = "") -> int:
+        devolucoes = self.repository.listar(termo_busca=termo_busca.strip(), plataforma=plataforma.strip())
+
+        planilha = openpyxl.Workbook()
+        aba = planilha.active
+        aba.title = "Devoluções"
+
+        aba.append([titulo for _, titulo in COLUNAS_EXPORTACAO])
+        for devolucao in devolucoes:
+            aba.append([getattr(devolucao, campo) for campo, _ in COLUNAS_EXPORTACAO])
+
+        for indice, (_, titulo) in enumerate(COLUNAS_EXPORTACAO, start=1):
+            aba.column_dimensions[get_column_letter(indice)].width = max(len(titulo) + 2, 14)
+
+        planilha.save(caminho)
+        return len(devolucoes)
 
     def listar_pendentes_analise(self):
         return self.repository.listar_por_status("Recebida")
