@@ -40,7 +40,7 @@ class DevolucaoRepository:
         finally:
             conn.close()
 
-    def listar(self, termo_busca: str = "", plataforma: str = ""):
+    def listar(self, termo_busca: str = "", plataforma: str = "", lancado_sistema: str = ""):
         conn = get_connection()
         try:
             condicoes = []
@@ -54,6 +54,10 @@ class DevolucaoRepository:
             if plataforma:
                 condicoes.append("plataforma = ?")
                 parametros.append(plataforma)
+
+            if lancado_sistema:
+                condicoes.append("COALESCE(lancado_sistema, 'NAO') = ?")
+                parametros.append(lancado_sistema)
 
             query = "SELECT * FROM devolucoes"
             if condicoes:
@@ -84,6 +88,59 @@ class DevolucaoRepository:
                 (status,)
             ).fetchall()
             return [Devolucao(**dict(linha)) for linha in linhas]
+        finally:
+            conn.close()
+
+    def listar_por_indicador(self, status: str = None, destino: str = None):
+        conn = get_connection()
+        try:
+            condicoes = []
+            parametros = []
+
+            if status:
+                condicoes.append("status = ?")
+                parametros.append(status)
+
+            if destino:
+                condicoes.append("destino = ?")
+                parametros.append(destino)
+
+            query = "SELECT * FROM devolucoes"
+            if condicoes:
+                query += " WHERE " + " AND ".join(condicoes)
+            query += " ORDER BY data_criacao DESC"
+
+            linhas = conn.execute(query, parametros).fetchall()
+            return [Devolucao(**dict(linha)) for linha in linhas]
+        finally:
+            conn.close()
+
+    def reabrir_decisao(self, devolucao_id: int):
+        conn = get_connection()
+        try:
+            conn.execute("""
+                UPDATE devolucoes
+                SET status = 'Analisada',
+                    destino = '',
+                    observacoes_decisao = '',
+                    data_decisao = '',
+                    data_atualizacao = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (devolucao_id,))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def atualizar_lancado_sistema(self, devolucao_id: int, lancado_sistema: str):
+        conn = get_connection()
+        try:
+            conn.execute("""
+                UPDATE devolucoes
+                SET lancado_sistema = ?,
+                    data_atualizacao = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (lancado_sistema, devolucao_id))
+            conn.commit()
         finally:
             conn.close()
 

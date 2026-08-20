@@ -1,13 +1,16 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
     QHBoxLayout,
     QFrame,
+    QDialog,
+    QListWidget,
 )
 
 from app.controllers.devolucao_controller import DevolucaoController
+from app.ui.detalhe_devolucao_dialog import DetalheDevolucaoDialog
 
 # (chave do indicador, rótulo do tile, cor da faixa lateral)
 # Recebidas/Aguardando decisão são dois estágios do mesmo fluxo (mesma cor,
@@ -22,9 +25,19 @@ INDICADORES = [
 ]
 
 
-def _criar_tile(cor: str) -> tuple[QFrame, QLabel, QLabel]:
-    tile = QFrame()
+class TileIndicador(QFrame):
+    clicado = Signal()
+
+    def mousePressEvent(self, evento):
+        if evento.button() == Qt.LeftButton:
+            self.clicado.emit()
+        super().mousePressEvent(evento)
+
+
+def _criar_tile(cor: str) -> tuple[TileIndicador, QLabel, QLabel]:
+    tile = TileIndicador()
     tile.setObjectName("tileIndicador")
+    tile.setCursor(Qt.PointingHandCursor)
     tile.setStyleSheet(f"""
         #tileIndicador {{
             background-color: #ffffff;
@@ -58,6 +71,8 @@ class DashboardPage(QWidget):
 
         self.controller = controller or DevolucaoController()
         self._labels_valor = {}
+        self._abrir_analise = None
+        self._abrir_decisao = None
 
         layout = QVBoxLayout()
         layout.setContentsMargins(24, 24, 24, 24)
@@ -94,6 +109,9 @@ class DashboardPage(QWidget):
         for chave, rotulo_texto, cor in INDICADORES:
             tile, label_valor, label_rotulo = _criar_tile(cor)
             label_rotulo.setText(rotulo_texto)
+            tile.clicado.connect(
+                lambda chave=chave, rotulo_texto=rotulo_texto: self._abrir_lista(chave, rotulo_texto)
+            )
             indicadores.addWidget(tile)
             self._labels_valor[chave] = label_valor
         layout.addLayout(indicadores)
@@ -104,9 +122,54 @@ class DashboardPage(QWidget):
 
         self.ao_exibir()
 
+    def definir_navegacao(self, abrir_analise=None, abrir_decisao=None):
+        """Recebe da MainWindow as funções que trocam de página, para que o
+        Dashboard consiga levar direto a um pedido específico em Análise ou
+        Decisão sem precisar conhecer o QStackedWidget."""
+        self._abrir_analise = abrir_analise
+        self._abrir_decisao = abrir_decisao
+
     def ao_exibir(self):
         """Chamado pela MainWindow toda vez que a página é aberta, para
         manter os indicadores atualizados."""
         indicadores = self.controller.obter_indicadores()
         for chave, label_valor in self._labels_valor.items():
             label_valor.setText(str(indicadores.get(chave, 0)))
+
+    def _abrir_lista(self, chave, rotulo_texto):
+        devolucoes = self.controller.listar_por_indicador(chave)
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(rotulo_texto)
+        dialog.setMinimumWidth(360)
+        dialog.setMinimumHeight(320)
+
+        layout = QVBoxLayout()
+
+        if not devolucoes:
+            layout.addWidget(QLabel("Nenhum pedido nesta contagem."))
+        else:
+            lista = QListWidget()
+            for devolucao in devolucoes:
+                lista.addItem(f"{devolucao.numero_pedido} — {devolucao.cliente}")
+
+            def ao_clicar(item):
+                devolucao_selecionada = devolucoes[lista.row(item)]
+                dialog.accept()
+                self._abrir_pedido(devolucao_selecionada)
+
+            lista.itemClicked.connect(ao_clicar)
+            layout.addWidget(lista)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def _abrir_pedido(self, devolucao):
+        if devolucao.status == "Recebida" and self._abrir_analise:
+            self._abrir_analise(devolucao.id)
+        elif devolucao.status == "Analisada" and self._abrir_decisao:
+            self._abrir_decisao(devolucao.id)
+        else:
+            dialog = DetalheDevolucaoDialog(self.controller, devolucao, self)
+            dialog.exec()
+            self.ao_exibir()

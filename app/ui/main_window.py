@@ -121,6 +121,21 @@ class MainWindow(QMainWindow):
         botoes_navegacao[0].setChecked(True)
         conteudo.setCurrentWidget(next(iter(paginas.values())))
 
+        botoes_por_nome = dict(zip(paginas.keys(), botoes_navegacao))
+
+        def ir_para_analise(devolucao_id):
+            navegar_para("Análise", botoes_por_nome["Análise"])
+            paginas["Análise"].selecionar_devolucao(devolucao_id)
+
+        def ir_para_decisao(devolucao_id):
+            navegar_para("Decisão", botoes_por_nome["Decisão"])
+            paginas["Decisão"].selecionar_devolucao(devolucao_id)
+
+        paginas["Dashboard"].definir_navegacao(
+            abrir_analise=ir_para_analise,
+            abrir_decisao=ir_para_decisao,
+        )
+
         menu.addStretch()
 
         layout_principal.addWidget(menu_widget)

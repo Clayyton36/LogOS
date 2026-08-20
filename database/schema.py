@@ -27,6 +27,7 @@ def create_tables():
             data_analise TEXT,
             observacoes_decisao TEXT,
             data_decisao TEXT,
+            lancado_sistema TEXT DEFAULT 'NAO',
             data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -49,6 +50,12 @@ def create_tables():
     for coluna in colunas_novas:
         if coluna not in colunas_existentes:
             cursor.execute(f"ALTER TABLE devolucoes ADD COLUMN {coluna} TEXT")
+
+    # lancado_sistema tem DEFAULT proprio (o SQLite usa esse default pra
+    # preencher retroativamente as linhas ja existentes ao adicionar a
+    # coluna, diferente das colunas acima que nascem NULL).
+    if "lancado_sistema" not in colunas_existentes:
+        cursor.execute("ALTER TABLE devolucoes ADD COLUMN lancado_sistema TEXT DEFAULT 'NAO'")
 
     tabela_condicoes_ja_existia = cursor.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='condicoes_produto'"

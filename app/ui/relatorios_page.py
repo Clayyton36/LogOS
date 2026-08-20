@@ -14,9 +14,9 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from app.controllers.devolucao_controller import DevolucaoController
+from app.controllers.devolucao_controller import DevolucaoController, DevolucaoValidationError
 
-COLUNAS = ["Pedido", "Cliente", "Plataforma", "Status", "Destino", "Recebido em"]
+COLUNAS = ["Pedido", "Cliente", "Plataforma", "Status", "Destino", "Recebido em", "Lançado no sistema"]
 
 
 class RelatoriosPage(QWidget):
@@ -46,6 +46,13 @@ class RelatoriosPage(QWidget):
         self.combo_plataforma.currentIndexChanged.connect(self.buscar)
         filtros.addWidget(self.combo_plataforma)
 
+        self.combo_lancado_sistema = QComboBox()
+        self.combo_lancado_sistema.addItem("Todos", "")
+        self.combo_lancado_sistema.addItem("Lançados no sistema", "SIM")
+        self.combo_lancado_sistema.addItem("Não lançados no sistema", "NAO")
+        self.combo_lancado_sistema.currentIndexChanged.connect(self.buscar)
+        filtros.addWidget(self.combo_lancado_sistema)
+
         botao_buscar = QPushButton("Buscar")
         botao_buscar.clicked.connect(self.buscar)
         filtros.addWidget(botao_buscar)
@@ -59,6 +66,7 @@ class RelatoriosPage(QWidget):
         self.tabela.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabela.verticalHeader().setVisible(False)
         self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tabela.itemSelectionChanged.connect(self._atualizar_botao_lancado)
         layout.addWidget(self.tabela)
 
         rodape = QHBoxLayout()
@@ -66,6 +74,11 @@ class RelatoriosPage(QWidget):
         self.label_contagem.setStyleSheet("color: #6b7280; font-size: 12px;")
         rodape.addWidget(self.label_contagem)
         rodape.addStretch()
+
+        self.botao_alternar_lancado = QPushButton("Marcar como lançado")
+        self.botao_alternar_lancado.setEnabled(False)
+        self.botao_alternar_lancado.clicked.connect(self._alternar_lancado_sistema)
+        rodape.addWidget(self.botao_alternar_lancado)
 
         botao_exportar = QPushButton("Exportar para Excel")
         botao_exportar.clicked.connect(self.exportar)
@@ -99,9 +112,13 @@ class RelatoriosPage(QWidget):
     def buscar(self):
         termo = self.campo_busca.text().strip()
         plataforma = self.combo_plataforma.currentData() or ""
+        lancado_sistema = self.combo_lancado_sistema.currentData() or ""
 
-        self._devolucoes_exibidas = self.controller.consultar(termo_busca=termo, plataforma=plataforma)
+        self._devolucoes_exibidas = self.controller.consultar(
+            termo_busca=termo, plataforma=plataforma, lancado_sistema=lancado_sistema
+        )
         self._preencher_tabela(self._devolucoes_exibidas)
+        self._atualizar_botao_lancado()
 
         quantidade = len(self._devolucoes_exibidas)
         self.label_contagem.setText(
@@ -111,6 +128,7 @@ class RelatoriosPage(QWidget):
     def _preencher_tabela(self, devolucoes):
         self.tabela.setRowCount(len(devolucoes))
         for linha, devolucao in enumerate(devolucoes):
+            lancado = "SIM" if (devolucao.lancado_sistema or "NAO") == "SIM" else "NÃO"
             valores = [
                 devolucao.numero_pedido,
                 devolucao.cliente,
@@ -118,9 +136,40 @@ class RelatoriosPage(QWidget):
                 devolucao.status,
                 devolucao.destino,
                 devolucao.data_recebimento,
+                lancado,
             ]
             for coluna, valor in enumerate(valores):
                 self.tabela.setItem(linha, coluna, QTableWidgetItem(valor or ""))
+
+    def _atualizar_botao_lancado(self):
+        linha = self.tabela.currentRow()
+        if linha < 0 or linha >= len(self._devolucoes_exibidas):
+            self.botao_alternar_lancado.setEnabled(False)
+            self.botao_alternar_lancado.setText("Marcar como lançado")
+            return
+
+        devolucao = self._devolucoes_exibidas[linha]
+        self.botao_alternar_lancado.setEnabled(True)
+        if (devolucao.lancado_sistema or "NAO") == "SIM":
+            self.botao_alternar_lancado.setText("Desmarcar lançamento")
+        else:
+            self.botao_alternar_lancado.setText("Marcar como lançado")
+
+    def _alternar_lancado_sistema(self):
+        linha = self.tabela.currentRow()
+        if linha < 0 or linha >= len(self._devolucoes_exibidas):
+            return
+
+        devolucao = self._devolucoes_exibidas[linha]
+        novo_valor = "NAO" if (devolucao.lancado_sistema or "NAO") == "SIM" else "SIM"
+
+        try:
+            self.controller.marcar_lancado_sistema(devolucao.id, novo_valor)
+        except DevolucaoValidationError as erro:
+            QMessageBox.warning(self, "Não foi possível atualizar", str(erro))
+            return
+
+        self.buscar()
 
     def exportar(self):
         caminho, _ = QFileDialog.getSaveFileName(
@@ -134,10 +183,11 @@ class RelatoriosPage(QWidget):
 
         termo = self.campo_busca.text().strip()
         plataforma = self.combo_plataforma.currentData() or ""
+        lancado_sistema = self.combo_lancado_sistema.currentData() or ""
 
         try:
             quantidade = self.controller.exportar_para_excel(
-                caminho, termo_busca=termo, plataforma=plataforma
+                caminho, termo_busca=termo, plataforma=plataforma, lancado_sistema=lancado_sistema
             )
         except OSError as erro:
             QMessageBox.critical(

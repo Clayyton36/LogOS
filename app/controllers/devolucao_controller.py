@@ -13,6 +13,24 @@ class DevolucaoValidationError(Exception):
 
 DESTINOS_VALIDOS = ("ESTOQUE", "TROCA", "DESCARTE")
 
+PLATAFORMAS_VALIDAS = ("MERCADO LIVRE", "SHOPEE", "TIKTOK", "CORREIOS", "FISICO")
+
+OBSERVACOES_RECEBIMENTO_VALIDAS = ("COM AVARIA", "SEM AVARIA", "PRODUTO TROCADO", "ENVIADO ERRADO")
+
+ACESSORIOS_VALIDOS = ("OK", "DANIFICADO")
+
+AVARIA_VALIDOS = ("AVARIADO", "SEM AVARIA")
+
+LANCADO_SISTEMA_VALIDOS = ("SIM", "NAO")
+
+INDICADOR_FILTROS = {
+    "recebidas": {"status": "Recebida"},
+    "aguardando_decisao": {"status": "Analisada"},
+    "estoque": {"status": "Finalizada", "destino": "ESTOQUE"},
+    "troca": {"status": "Finalizada", "destino": "TROCA"},
+    "descarte": {"status": "Finalizada", "destino": "DESCARTE"},
+}
+
 COLUNAS_EXPORTACAO = [
     ("numero_pedido", "Número do pedido"),
     ("numero_nf", "Número da NF"),
@@ -33,6 +51,7 @@ COLUNAS_EXPORTACAO = [
     ("data_decisao", "Data da decisão"),
     ("status", "Status"),
     ("observacoes", "Observações do recebimento"),
+    ("lancado_sistema", "Lançado no sistema"),
 ]
 
 
@@ -46,7 +65,6 @@ class DevolucaoController:
         numero_pedido: str,
         plataforma: str,
         cliente: str,
-        sku: str,
         produto: str,
         responsavel_recebimento: str,
         numero_nf: str = "",
@@ -64,23 +82,38 @@ class DevolucaoController:
                 "Preencha os campos obrigatórios: " + ", ".join(faltando)
             )
 
+        if plataforma.strip().upper() not in PLATAFORMAS_VALIDAS:
+            raise DevolucaoValidationError(
+                "Selecione uma plataforma válida: " + ", ".join(PLATAFORMAS_VALIDAS)
+            )
+
         devolucao = Devolucao(
-            numero_pedido=numero_pedido.strip(),
-            plataforma=plataforma.strip(),
-            cliente=cliente.strip(),
-            sku=sku.strip(),
-            produto=produto.strip(),
-            responsavel_recebimento=responsavel_recebimento.strip(),
-            numero_nf=numero_nf.strip(),
-            observacoes=observacoes.strip(),
+            numero_pedido=numero_pedido.strip().upper(),
+            plataforma=plataforma.strip().upper(),
+            cliente=cliente.strip().upper(),
+            produto=produto.strip().upper(),
+            responsavel_recebimento=responsavel_recebimento.strip().upper(),
+            numero_nf=numero_nf.strip().upper(),
+            observacoes=observacoes.strip().upper(),
             status="Recebida",
             data_recebimento=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         return self.repository.salvar(devolucao)
 
-    def consultar(self, termo_busca: str = "", plataforma: str = ""):
-        return self.repository.listar(termo_busca=termo_busca.strip(), plataforma=plataforma.strip())
+    def consultar(self, termo_busca: str = "", plataforma: str = "", lancado_sistema: str = ""):
+        return self.repository.listar(
+            termo_busca=termo_busca.strip(),
+            plataforma=plataforma.strip(),
+            lancado_sistema=lancado_sistema.strip(),
+        )
+
+    def marcar_lancado_sistema(self, devolucao_id: int, lancado_sistema: str):
+        if devolucao_id is None:
+            raise DevolucaoValidationError("Selecione uma devolução.")
+        if lancado_sistema not in LANCADO_SISTEMA_VALIDOS:
+            raise DevolucaoValidationError("Valor inválido para lançado no sistema.")
+        self.repository.atualizar_lancado_sistema(devolucao_id, lancado_sistema)
 
     def listar_plataformas(self):
         return self.repository.listar_plataformas()
@@ -88,8 +121,25 @@ class DevolucaoController:
     def obter_indicadores(self):
         return self.repository.obter_indicadores()
 
-    def exportar_para_excel(self, caminho: str, termo_busca: str = "", plataforma: str = "") -> int:
-        devolucoes = self.repository.listar(termo_busca=termo_busca.strip(), plataforma=plataforma.strip())
+    def listar_por_indicador(self, chave: str):
+        filtro = INDICADOR_FILTROS.get(chave, {})
+        return self.repository.listar_por_indicador(
+            status=filtro.get("status"), destino=filtro.get("destino")
+        )
+
+    def reabrir_devolucao(self, devolucao_id: int):
+        if devolucao_id is None:
+            raise DevolucaoValidationError("Selecione uma devolução para reabrir.")
+        self.repository.reabrir_decisao(devolucao_id)
+
+    def exportar_para_excel(
+        self, caminho: str, termo_busca: str = "", plataforma: str = "", lancado_sistema: str = ""
+    ) -> int:
+        devolucoes = self.repository.listar(
+            termo_busca=termo_busca.strip(),
+            plataforma=plataforma.strip(),
+            lancado_sistema=lancado_sistema.strip(),
+        )
 
         planilha = openpyxl.Workbook()
         aba = planilha.active
@@ -115,7 +165,6 @@ class DevolucaoController:
         avaria: str = "",
         acessorios: str = "",
         situacao_encontrada: str = "",
-        observacoes_analise: str = "",
     ):
         if devolucao_id is None:
             raise DevolucaoValidationError("Selecione uma devolução para analisar.")
@@ -129,7 +178,7 @@ class DevolucaoController:
             avaria=avaria.strip(),
             acessorios=acessorios.strip(),
             situacao_encontrada=situacao_encontrada.strip(),
-            observacoes_analise=observacoes_analise.strip(),
+            observacoes_analise="",
             data_analise=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             novo_status="Analisada",
         )

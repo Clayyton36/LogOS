@@ -1,15 +1,20 @@
 from PySide6.QtWidgets import (
+    QComboBox,
     QFormLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
-from app.controllers.devolucao_controller import DevolucaoController, DevolucaoValidationError
+from app.controllers.devolucao_controller import (
+    OBSERVACOES_RECEBIMENTO_VALIDAS,
+    PLATAFORMAS_VALIDAS,
+    DevolucaoController,
+    DevolucaoValidationError,
+)
 
 
 class NovaDevolucaoPage(QWidget):
@@ -29,21 +34,22 @@ class NovaDevolucaoPage(QWidget):
 
         self.campo_numero_pedido = QLineEdit()
         self.campo_numero_nf = QLineEdit()
-        self.campo_plataforma = QLineEdit()
+        self.combo_plataforma = QComboBox()
+        self.combo_plataforma.addItems(PLATAFORMAS_VALIDAS)
         self.campo_cliente = QLineEdit()
-        self.campo_sku = QLineEdit()
         self.campo_produto = QLineEdit()
         self.campo_responsavel = QLineEdit()
-        self.campo_observacoes = QTextEdit()
+        self.combo_observacoes = QComboBox()
+        self.combo_observacoes.addItem("")
+        self.combo_observacoes.addItems(OBSERVACOES_RECEBIMENTO_VALIDAS)
 
         form.addRow("Número do pedido *", self.campo_numero_pedido)
         form.addRow("Número da NF", self.campo_numero_nf)
-        form.addRow("Plataforma *", self.campo_plataforma)
+        form.addRow("Plataforma *", self.combo_plataforma)
         form.addRow("Cliente *", self.campo_cliente)
-        form.addRow("SKU", self.campo_sku)
         form.addRow("Produto", self.campo_produto)
         form.addRow("Responsável pelo recebimento *", self.campo_responsavel)
-        form.addRow("Observações", self.campo_observacoes)
+        form.addRow("Observações", self.combo_observacoes)
 
         layout.addLayout(form)
 
@@ -57,13 +63,12 @@ class NovaDevolucaoPage(QWidget):
         try:
             self.controller.registrar_recebimento(
                 numero_pedido=self.campo_numero_pedido.text(),
-                plataforma=self.campo_plataforma.text(),
+                plataforma=self.combo_plataforma.currentText(),
                 cliente=self.campo_cliente.text(),
-                sku=self.campo_sku.text(),
                 produto=self.campo_produto.text(),
                 responsavel_recebimento=self.campo_responsavel.text(),
                 numero_nf=self.campo_numero_nf.text(),
-                observacoes=self.campo_observacoes.toPlainText(),
+                observacoes=self.combo_observacoes.currentText(),
             )
         except DevolucaoValidationError as erro:
             QMessageBox.warning(self, "Dados incompletos", str(erro))
@@ -75,9 +80,8 @@ class NovaDevolucaoPage(QWidget):
     def _limpar_formulario(self):
         self.campo_numero_pedido.clear()
         self.campo_numero_nf.clear()
-        self.campo_plataforma.clear()
+        self.combo_plataforma.setCurrentIndex(0)
         self.campo_cliente.clear()
-        self.campo_sku.clear()
         self.campo_produto.clear()
         self.campo_responsavel.clear()
-        self.campo_observacoes.clear()
+        self.combo_observacoes.setCurrentIndex(0)

@@ -24,5 +24,6 @@ class Devolucao:
     data_analise: str = ""
     observacoes_decisao: str = ""
     data_decisao: str = ""
+    lancado_sistema: str = "NAO"
     data_criacao: str = ""
     data_atualizacao: str = ""

@@ -4,13 +4,17 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QFormLayout,
     QComboBox,
-    QLineEdit,
     QTextEdit,
     QPushButton,
     QMessageBox,
 )
 
-from app.controllers.devolucao_controller import DevolucaoController, DevolucaoValidationError
+from app.controllers.devolucao_controller import (
+    ACESSORIOS_VALIDOS,
+    AVARIA_VALIDOS,
+    DevolucaoController,
+    DevolucaoValidationError,
+)
 from app.controllers.configuracoes_controller import ConfiguracoesController
 
 
@@ -47,17 +51,18 @@ class AnalisePage(QWidget):
         self.combo_condicao = QComboBox()
         form.addRow("Condição do produto *", self.combo_condicao)
 
-        self.campo_avaria = QLineEdit()
-        form.addRow("Avaria", self.campo_avaria)
+        self.combo_avaria = QComboBox()
+        self.combo_avaria.addItem("")
+        self.combo_avaria.addItems(AVARIA_VALIDOS)
+        form.addRow("Avaria", self.combo_avaria)
 
-        self.campo_acessorios = QLineEdit()
-        form.addRow("Acessórios", self.campo_acessorios)
+        self.combo_acessorios = QComboBox()
+        self.combo_acessorios.addItem("")
+        self.combo_acessorios.addItems(ACESSORIOS_VALIDOS)
+        form.addRow("Acessórios", self.combo_acessorios)
 
         self.campo_situacao_encontrada = QTextEdit()
         form.addRow("Situação encontrada", self.campo_situacao_encontrada)
-
-        self.campo_observacoes = QTextEdit()
-        form.addRow("Observações", self.campo_observacoes)
 
         layout.addLayout(form)
 
@@ -106,6 +111,14 @@ class AnalisePage(QWidget):
         indice = self.combo_condicao.findText(condicao_selecionada)
         self.combo_condicao.setCurrentIndex(indice if indice >= 0 else 0)
 
+    def selecionar_devolucao(self, devolucao_id):
+        """Chamado pela MainWindow para abrir a página já com um pedido
+        específico escolhido (ex.: vindo de um card do Dashboard)."""
+        self.ao_exibir()
+        indice = self.combo_devolucao.findData(devolucao_id)
+        if indice >= 0:
+            self.combo_devolucao.setCurrentIndex(indice)
+
     def _devolucao_selecionada(self):
         devolucao_id = self.combo_devolucao.currentData()
         return next((d for d in self._pendentes if d.id == devolucao_id), None)
@@ -134,10 +147,9 @@ class AnalisePage(QWidget):
             self.controller.registrar_analise(
                 devolucao_id=devolucao.id if devolucao else None,
                 condicao_produto=self.combo_condicao.currentText(),
-                avaria=self.campo_avaria.text(),
-                acessorios=self.campo_acessorios.text(),
+                avaria=self.combo_avaria.currentText(),
+                acessorios=self.combo_acessorios.currentText(),
                 situacao_encontrada=self.campo_situacao_encontrada.toPlainText(),
-                observacoes_analise=self.campo_observacoes.toPlainText(),
             )
         except DevolucaoValidationError as erro:
             QMessageBox.warning(self, "Dados incompletos", str(erro))
@@ -148,7 +160,6 @@ class AnalisePage(QWidget):
 
     def _limpar_formulario(self):
         self.combo_condicao.setCurrentIndex(0)
-        self.campo_avaria.clear()
-        self.campo_acessorios.clear()
+        self.combo_avaria.setCurrentIndex(0)
+        self.combo_acessorios.setCurrentIndex(0)
         self.campo_situacao_encontrada.clear()
-        self.campo_observacoes.clear()

@@ -83,6 +83,14 @@ class DecisaoPage(QWidget):
 
         self._atualizar_dados_devolucao_selecionada()
 
+    def selecionar_devolucao(self, devolucao_id):
+        """Chamado pela MainWindow para abrir a página já com um pedido
+        específico escolhido (ex.: vindo de um card do Dashboard)."""
+        self.ao_exibir()
+        indice = self.combo_devolucao.findData(devolucao_id)
+        if indice >= 0:
+            self.combo_devolucao.setCurrentIndex(indice)
+
     def _devolucao_selecionada(self):
         devolucao_id = self.combo_devolucao.currentData()
         return next((d for d in self._pendentes if d.id == devolucao_id), None)
